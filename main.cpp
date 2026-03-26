@@ -1,133 +1,133 @@
-#include <windows.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.Devices.Bluetooth.h>
-#include <winrt/Windows.Devices.Enumeration.h>
-#include <iostream>
-#include <vector>
-#include <string>
-#include <mutex>
-#include <thread>
-
-using namespace winrt;
-using namespace Windows::Foundation;
-using namespace Windows::Devices::Bluetooth;
-using namespace Windows::Devices::Enumeration;
-
-// Global state for the widget
-struct DeviceStatus {
-    std::wstring name;
-    bool isConnected;
-};
-
-std::vector<DeviceStatus> g_devices;
-std::mutex g_devicesMutex;
-HWND g_hWnd = NULL;
-
-// Function to refresh Bluetooth device list
-IAsyncAction RefreshBluetoothStatus() {
-    auto selector = BluetoothDevice::GetDeviceSelector();
-    auto devices = co_await DeviceInformation::FindAllAsync(selector);
-
-    std::vector<DeviceStatus> newDevices;
-    for (auto&& info : devices) {
-        try {
-            auto device = co_await BluetoothDevice::FromIdAsync(info.Id());
-            if (device) {
-                newDevices.push_back({ info.Name().c_str(), device.ConnectionStatus() == BluetoothConnectionStatus::Connected });
-            }
-        } catch (...) {
-            // Some devices might fail to open
-        }
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(g_devicesMutex);
-        g_devices = std::move(newDevices);
-    }
-
-    // Trigger a repaint of the window
-    if (g_hWnd) {
-        InvalidateRect(g_hWnd, NULL, TRUE);
-    }
-}
-
-// Window Procedure
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    switch (uMsg) {
-    case WM_PAINT: {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hwnd, &ps);
-        
-        FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-
-        std::lock_guard<std::mutex> lock(g_devicesMutex);
-        int y = 10;
-        TextOut(hdc, 10, y, L"Bluetooth Device Status:", 24);
-        y += 30;
-
-        if (g_devices.empty()) {
-            TextOut(hdc, 20, y, L"No paired devices found.", 24);
-        } else {
-            for (const auto& dev : g_devices) {
-                std::wstring status = dev.name + L" - " + (dev.isConnected ? L"Connected" : L"Disconnected");
-                TextOut(hdc, 20, y, status.c_str(), static_cast<int>(status.length()));
-                y += 20;
-            }
-        }
-
-        EndPaint(hwnd, &ps);
-        return 0;
-    }
-    case WM_TIMER:
-        RefreshBluetoothStatus();
-        return 0;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    }
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
-    init_apartment();
-
-    // Register Window Class
-    const wchar_t CLASS_NAME[] = L"BluetoothWidgetClass";
-    WNDCLASS wc = { };
-    wc.lpfnWndProc = WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-
-    RegisterClass(&wc);
-
-    // Create Window (Widget-like: Small, No resizing)
-    g_hWnd = CreateWindowEx(
-        WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
-        CLASS_NAME,
-        L"Bluetooth Status",
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-        CW_USEDEFAULT, CW_USEDEFAULT, 300, 400,
-        NULL, NULL, hInstance, NULL
-    );
-
-    if (g_hWnd == NULL) return 0;
-
-    ShowWindow(g_hWnd, nCmdShow);
-
-    // Initial Refresh
-    RefreshBluetoothStatus();
-
-    // Refresh every 5 seconds
-    SetTimer(g_hWnd, 1, 5000, NULL);
-
-    // Message Loop
-    MSG msg = { };
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
-    return 0;
-}
+I2luY2x1ZGUgPHdpbmRvd3MuaD4KI2luY2x1ZGUgPENvbW1DdHJsLmg+CiNp
+bmNsdWRlIDx3aW5ydC9XaW5kb3dzLkZvdW5kYXRpb24uaD4KI2luY2x1ZGUg
+PHdpbnJ0L1dpbmRvd3MuRm91bmRhdGlvbi5Db2xsZWN0aW9ucy5oPgojaW5j
+bHVkZSA8d2lucnQvV2luZG93cy5EZXZpY2VzLkJsdWV0b290aC5oPgojaW5j
+bHVkZSA8d2lucnQvV2luZG93cy5EZXZpY2VzLkVudW1lcmF0aW9uLmg+CiNp
+bmNsdWRlIDxpb3N0cmVhbT4KI2luY2x1ZGUgPHZlY3Rvcj4KI2luY2x1ZGUg
+PHN0cmluZz4KI2luY2x1ZGUgPG11dGV4PgojaW5jbHVkZSA8dGhyZWFkPgoK
+I3ByYWdtYSBjb21tZW50KGxpYiwgImNvbWN0bDMyLmxpYiIpCiNwcmFnbWEg
+Y29tbWVudChsaWIsICJ3aW5ydV9icmlkZ2UubGliIikgLy8gQWRqdXN0IGFz
+IG5lZWRlZCBmb3IgYnVpbGQKCnVzaW5nIG5hbWVzcGFjZSB3aW5ydDsKdXNp
+bm nbmFtZXNwYWNlIFdpbmRvd3M6OkZvdW5kYXRpb247CnVzaW5nIG5hbWVz
+cGFjZSBXaW5kb3dzOjpEZXZpY2VzOjpCbHVldG9vdGg7CnVzaW5nIG5hbWVz
+cGFjZSBXaW5kb3dzOjpEZXZpY2VzOjpFbnVtZXJhdGlvbjsKCi8vIElEcyBm
+b3IgQ29udHJvbHMKI2RlZmluZSBJRF9MSVNUQ09OVFJPTEwgMTAwMQojZGVm
+aW5lIElEX0JUTl9SRUZSRVNIIDEwMDIKI2RlZmluZSBJRF9CVE5fQ09OTkVD
+VCAxMDAzCgpzdHJ1Y3QgQmx1ZXRvb3RoRGV2aWNlSW5mbyB7CiAgICBzdGQ6
+OndzdHJpbmcgbmFtZTsKICAgIHN0ZDo6d3N0cmluZyBpZDsKICAgIGJvb2wg
+aXNDb25uZWN0ZWQ7CiAgICBpbnQgc2lnbmFsU3RyZW5ndGg7IC8vIFJTU0kg
+dmFsdWUKfTsKCnN0ZDo6dmVjdG9yPEJsdWV0b290aERldmljZUluZm8+IGdf
+ZGV2aWNlczsKc3RkOjptdXRleCBnX2RldmljZXNNdXRleDsKSFdORCBnX2hX
+bmQgPSBOVUxMOwpIV05EIGdfaExpc3RWaWV3ID0gTlVMTDsKCi8vIEhlbHBl
+ciB0byB1cGRhdGUgdGhlIExpc3RWaWV3IGZyb20gdGhlIGdsb2JhbCB2ZWN0
+b3IKdm9pZCBVcGRhdGVMaXN0VmlldygpIHsKICAgIExpc3RWaWV3X0RlbGV0
+ZUFsbEl0ZW1zKGdfaExpc3RWaWV3KTsKICAgIHN0ZDo6bG9ja19ndWFyZDxz
+dGQ6Om11dGV4PiBsb2NrKGdfZGV2aWNlc011dGV4KTsKCiAgICBmb3IgKGlu
+dCBpID0gMDsgaSA8IGdfZGV2aWNlcy5zaXplKCk7ICsraSkgewogICAgICAg
+IExWSVRFTSBsdml0ZW0gPSB7IDAgfTsKICAgICAgICBsdml0ZW0ubWFzayA9
+IExWSWZfVEVYVCB8IExWSWZfUEFSQU07CiAgICAgICAgbHZpdGVtLmlJdGVt
+ID0gaTsKICAgICAgICBsdml0ZW0uaVN1Ykl0ZW0gPSAwOwogICAgICAgIGx2
+aXRlbS5wc3pUZXh0ID0gY29uc3RfY2FzdDxMUFdTVFI+KGdfZGV2aWNlc1tp
+XS5uYW1lLmNfc3RyKCkpOwogICAgICAgIGx2aXRlbS5sUGFyYW0gPSAobFBB
+UkFNSW50KWk7CiAgICAgICAgTGlzdFZpZXdfSW5zZXJ0SXRlbShnX2hMaXN0
+VmlldywgJmx2aXRlbSk7CgogICAgICAgIHN0ZDo6d3N0cmluZyBzdGF0dXMg
+PSBnX2RldmljZXNbaV0uaXNDb25uZWN0ZWQgPyBMIkNvbm5lY3RlZCIgOiBM
+IkRpc2Nvbm5lY3RlZCI7CiAgICAgICAgTGlzdFZpZXdfU2V0SXRlbVRleHQo
+Z19oTGlzdFZpZXcsIGksIDEsIGNvbnN0X2Nhc3Q8TFBXU1RSPihzdGF0dXMu
+Y19zdHIoKSkpOwoKICAgICAgICBzdGQ6OndzdHJpbmcgc2lnbmFsID0gc3Rk
+Ojp0b3dfc3RyaW5nKGdfZGV2aWNlc1tpXS5zaWduYWxTdHJlbmd0aCkgKyBM
+IiBkQm0iOwogICAgICAgIExpc3RWaWV3X1NldEl0ZW1UZXh0KGdfaExpc3RW
+aWV3LCBpLCAyLCBjb25zdF9jYXN0PExQV1NUUj4oc2lnbmFsLmNfc3RyKCkp
+KTsKICAgIH0KfQoKSUFzeW5jQWN0aW9uIFJlZnJlc2hCbHVldG9vdGhTdGF0
+dXMoKSB7CiAgICBhdXRvIHNlbGVjdG9yID0gQmx1ZXRvb3RoRGV2aWNlOjpH
+ZXREZXZpY2VTZWxlY3RvcigpOwogICAgYXV0byBkZXZpY2VzID0gY29_YXdh
+aXQgRGV2aWNlSW5mb3JtYXRpb246OkZpbmRBbGxBc3luYyhzZWxlY3Rvcik7
+CgogICAgc3RkOjp2ZWN0b3I8Qmx1ZXRvb3RoRGV2aWNlSW5mbz4gbmV3RGV2
+aWNlczsKICAgIGZvciAoYXV0byYmIGluZm8gOiBkZXZpY2VzKSB7CiAgICAg
+ICAgdHJ5IHsKICAgICAgICAgICAgYXV0byBkZXZpY2UgPSBjb19hd2FpdCBC
+bHVldG9vdGhEZXZpY2U6OkZyb21JZEFzeW5jKGluZm8uSWQoKSk7CiAgICAg
+ICAgICAgIGlmIChkZXZpY2UpIHsKICAgICAgICAgICAgICAgIGludCByc3Np
+ID0gLTk5OyAvLyBEZWZhdWx0IHZhbHVlIGlmIG5vdCBhdmFpbGFibGUKICAg
+ICAgICAgICAgICAgIC8vIEluIGEgcmVhbCBzY2VuYXJpbywgUlNTSSBtaWdo
+dCBiZSBleHRyYWN0ZWQgZnJvbSBBZHZlcnRpc2VtZW50cyBvciBQcm9wZXJ0
+aWVzCiAgICAgICAgICAgICAgICBuZXdEZXZpY2VzLnB1c2hfYmFjayh7IGlu
+Zm8uTmFtZSgpLmNfc3RyKCksIGluZm8uSWQoKS5jX3N0cigpLCBkZXZpY2Uu
+Q29ubmVjdGlvblN0YXR1cygpID09IEJsdWV0b290aENvbm5lY3Rpb25TdGF0
+dXM6OkNvbm5lY3RlZCwgcnNzaSB9KTsKICAgICAgICAgICAgfQogICAgICAg
+IH0gY2F0Y2ggKC4uLikge30KICAgIH0KCiAgICB7CiAgICAgICAgc3RkOjps
+b2NrX2d1YXJkPHN0ZDo6bXV0ZXg+IGxvY2shZ19kZXZpY2VzTXV0ZXgpOwog
+ICAgICAgIGdfZGV2aWNlcyA9IHN0ZDo6bW92ZShuZXdEZXZpY2VzKTsKICAgIH0K
+CiAgICBQb3N0TWVzc2FnZShnX2hXbmQsIFdNX1VTRVIgKyAxLCAwLCAwKTsK
+fQoKSUFzeW5jQWN0aW9uIFRvZ2dsZUNvbm5lY3Rpb24oc3RkOjp3c3RyaW5n
+IGRldmljZUlkLCBib29sIGNvbm5lY3QpIHsKICAgIHRyeSB7CiAgICAgICAg
+YXV0byBkZXZpY2UgPSBjb19hd2FpdCBCbHVldG9vdGhEZXZpY2U6OkZyb21J
+ZEFzeW5jKGRldmljZUlkKTsKICAgICAgICBpZiAoZGV2aWNlKSB7CiAgICAg
+ICAgICAgIGlmIChjb25uZWN0KSB7CiAgICAgICAgICAgICAgICAvLyBGb3Jj
+ZSBjb25uZWN0IGJ5IGFjY2Vzc2luZyBhIEdBVFRzZXJ2aWNlIG9yIHNpbWls
+YXIKICAgICAgICAgICAgICAgIGNvX2F3YWl0IGRldmljZS5HZXRHYXR0U2Vy
+dmljZXNBc3luYygpOwogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAg
+ICAgICAgZGV2aWNlLkNsb3NlKCk7CiAgICAgICAgICAgIH0KICAgICAgICB9
+CiAgICB9IGNhdGNoICguLi4pIHt9CiAgICBSZWZyZXNoQmx1ZXRvb3RoU3Rh
+dHVzKCk7Cn0KCkxSRVNVTFQgQ0FMTEJBQ0sgV2luZG93UHJvYyhIV05EIGh3
+bmQsIFVJTlQgdU1zZywgV1BBUkFNIHdQYXJhbSwgTFBBUkFNIGxQYXJhbSkg
+ewogICAgc3dpdGNoICh1TXNnKSB7CiAgICBjYXNlIFdNX0NSRUFURTogewog
+ICAgICAgIEhJTlNUQU5DRSBoSW5zdCA9IChISU5TVEFOQ0UpR2V0V2luZG93
+TG9uZ1B0cihod25kLCBHV0xQX0hJTlNUQU5DRSk7CiAgICAgICAgZ19oTGlz
+dFZpZXcgPSBDcmVhdGVXaW5kb3coV0NQX0xJU1RWSUVXLCBMIiIsCiAgICAg
+ICAgICAgIFdTX1ZJU0lCTEUgfCBXU19DSElMRCB8IExWUz9SRVBPUlQgfCBM
+VlM/U0hPV1NFTA9BTFdBWVMsCiAgICAgICAgICAgIDEwLCAxMCwgNDYwLCAy
+MDAsIGh3bmQsIChITUVOVSlJRF9MSVNUQ09OVFJPTCwgaEluc3QsIE5VTEwp
+OwogICAgICAgIExpc3RWaWV3X1NldEV4dGVuZGVkTFZTdHlsZShnX2hMaXN0
+VmlldywgTFZTX0VYX0ZVTExST1dTRUxFQ1QgfCBMVlNfRVhfR1JJRExJTkVT
+KTsKCiAgICAgICAgTFZDT0xVTU4gbHZjID0geyAwIH07CiAgICAgICAgbHZj
+Lm1hc2sgPSBMVkNfRk1UIHwgTFZDX1dJRFRIIHwgTFZDX1RFWFQgfCBMVkNf
+U1VCSVRFTTsKICAgICAgICBsdmMuaVN1Ykl0ZW0gPSAwOyBsdmMucHN6VGV4
+dCA9IEwiRGV2aWNlIE5hbWUiOyBsdmMuY3hOaXhlID0gMTUwOyBMaXN0Vmll
+d19JbnNlcnRDb2x1bW4oZ19oTGlzdFZpZXcsIDAsICZsdmMpOwogICAgICAg
+IGx2Yy5pU3ViSXRlbSA9IDE7IGx2Yy5wc3pUZXh0ID0gTCJTdGF0dXMiOyBs
+dmMuY3hOaXhlID0gMTAwOyBMaXN0Vmlld19JbnNlcnRDb2x1bW4oZ19oTGlz
+dFZpZXcsIDEsICZsdmMpOwogICAgICAgIGx2Yy5pU3ViSXRlbSA9IDI7IGx2
+Yy5wc3pUZXh0ID0gTCJTaWduYWwiOyBsdmMuY3hOaXhlID0gODA7IExpc3RW
+aWV3X0luc2VydENvbHVtbihnX2hMaXN0VmlldywgMiwgJmx2Yyk7CgogICAg
+ICAgIENyZWF0ZVdpbmRvdyhMUEJVVFRPTiwgTCJSZWZyZXNoIiwgV1NfVklT
+SUJMRSB8IFdTX0NISUxELCAxMCwgMjIwLCA4MCwgMzAsIGh3bmQsIChITUVO
+VSlJRF9CVE5fUkVGUkVTSCwgaEluc3QsIE5VTEwpOwogICAgICAgIENyZWF0
+ZVdpbmRvdyhMUEJVVFRPTiwgTCJDb25uZWN0L0Rpc2Nvbm5lY3QiLCBXU19W
+SVNJQkxFIHwgV1NfQ0hJTEQsIDk1LCAyMjAsIDE1MCwgMzAsIGh3bmQsIChI
+TUVOVSlJRF9CVE5fQ09OTkVDVCwgaEluc3QsIE5VTEwpOwogICAgICAgIHJl
+dHVybiAwOwogICAgfQogICAgY2FzZSBXTV9DT01NQU5EOiB7CiAgICAgICAg
+aW50IHdtSWQgPSBMT1dPUkQod1BhcmFtKTsKICAgICAgICBpZiAod21JZCA9
+PSBJRF9CVE5fUkVGUkVTSCkgUmVmcmVzaCBCbHVldG9vdGhTdGF0dXMoKTsK
+ICAgICAgICBlbHNlIGlmICh3bUlkID09IElEX0JUTl9DT05ORUNUKSB7CiAg
+ICAgICAgICAgIGludCBzZWwgPSBMaXN0Vmlld19HZXROZXh0SXRlbShnX2hM
+aXN0VmlldywgLTEsIExWSV9TRUxFQ1RFRCk7CiAgICAgICAgICAgIGlmIChz
+ZWwgIT0gLTEpIHsKICAgICAgICAgICAgICAgIHN0ZDo6bG9ja19ndWFyZDxz
+dGQ6Om11dGV4PiBsb2NrKGdfZGV2aWNlc011dGV4KTsKICAgICAgICAgICAg
+ICAgIFRvZ2dsZUNvbm5lY3Rpb24oZ19kZXZpY2VzW3NlbF0uaWQsICFnX2Rl
+dmljZXNbc2VsXS5pc0Nvbm5lY3RlZCk7CiAgICAgICAgICAgIH0KICAgICAg
+ICB9CiAgICAgICAgcmV0dXJuIDA7CiAgICB9CiAgICBjYXNlIFdNX1VTRVIg
+KyAxOiBVcGRhdGVMaXN0VmlldygpOyByZXR1cm4gMDsKICAgIGNhc2UgV01f
+VElNRVI6IFJlZnJlc2hCbHVldG9vdGhTdGF0dXMoKTsgcmV0dXJuIDA7CiAg
+ICBjYXNlIFdNX0RFU1RST1k6IFBvc3RRdWl0TWVzc2FnZSgwKTsgcmV0dXJu
+IDA7CiAgICB9CiAgICByZXR1cm4gRGVmV2luZG93UHJvYyhod25kLCB1TXNn
+LCB3UGFyYW0sIGxQYXJhbSk7Cn0KCmludCBBUElFTlRSWSB3V2luTWFpbihI
+SU5TVEFOQ0UgaEluc3RhbmNlLCBISU5TVEFOQ0UgaFByZXZJbnN0YW5jZSwg
+TFBXU1RSIGxwQ21kTGluZSwgaW50IG5DbWRTaG93KSB7CiAgICBpbml0X2Fw
+YXJ0bWVudCgpOwogICAgSW5pdENvbW1vbkNvbnRyb2xzKCk7CgogICAgY29u
+c3Qgd2NoYXJfdCBDTEFTU19OQU1FW10gPSBMIkJsdWV0b290aFdpZGdldENs
+YXNzIjsKICAgIFdORENMQVNTIHdjID0geyAwIH07CiAgICB3Yy5scGZuV25k
+UHJvYyA9IFdpbmRvd1Byb2M7IHdjLmhJbnN0YW5jZSA9IGhJbnN0YW5jZTsK
+ICAgIHdjLmxwc3pDbGFzc05hbWUgPSBDTEFTU19OQU1FOyB3Yy5oYnJCYWNr
+Z3JvdW5kID0gKEhCUlVTSCkoQ09MT1JfQlROLkZBQ0UgKyAxKTsKICAgIFJl
+Z2lzdGVyQ2xhc3MoJndjKTsKCiAgICBnX2hXbmQgPSBDcmVhdGVXaW5kb3dF
+eCgwLCBDTEFTU19OQU1FLCBMLkJsdWV0b290aCBEZXZpY2UgTWFuYWdlciIs
+CiAgICAgICAgV1NfT1ZFUkxBUFBFRFdJTkRPVyAmIH5XU19US ElDS0ZSQU1F
+ICYgfldTX01BWElNSVpFQk9YLCAKICAgICAgICBDV19VU0VERUZBVUxULCBD
+V19VU0VERUZBVUxULCA1MDAsIDMwMCwgTlVMTCwgTlVMTCwgaEluc3RhbmNl
+LCBOVUxMKTsKCiAgICBpZiAoZ19oV25kID09IE5VTEwpIHJldHVybiAwOwog
+ICAgU2hvd1dpbmRvdyhnX2hXbmQsIG5DbWRTaG93KTsKICAgIFJlZnJlc2hC
+bHVldG9vdGhTdGF0dXMoKTsKICAgIFNldFRpbWVyKGdfaFduZCwgMSwgMTAw
+MDAsIE5VTEwpOwoKICAgIE1TRyBtc2cgPSB7IDAgfTsKICAgIHdoaWxlIChH
+ZXRNZXNzYWdlKCZtc2csIE5VTEwsIDAsIDApKSB7IFRyYW5zbGF0ZU1lc3Nh
+Z2UoJm1zZycpOyBEaXNwYXRjaE1lc3NhZ2UoJm1zZycpOyB9CiAgICByZXR1
+cm4gMDsKfQo=
